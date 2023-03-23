@@ -1,0 +1,46 @@
+//@version=5
+strategy(title="Ejemplo de Robot de Trading - Bitcoin/Euro", overlay=true)
+
+// Definir parámetros
+length = input.int(14, "Longitud RSI")
+src = input(close, title="Fuente")
+mult = input.float(2.0, minval=0.1, maxval=5, title="Desviación Estándar")
+filt = input.float(0.2, minval=0.01, maxval=1, title="Filtro Volatilidad")
+
+// Calcular Indicadores
+rsiVal = ta.rsi(src, length)
+upperBand = ta.sma(src, length) + mult * ta.stdev(src, length)
+lowerBand = ta.sma(src, length) - mult * ta.stdev(src, length)
+bandWidth = (upperBand - lowerBand) / ta.sma(src, length)
+
+// Definir Condiciones de Entrada y Salida
+longCondition = rsiVal < 30 and bandWidth > filt
+shortCondition = rsiVal > 70 and bandWidth > filt
+exitCondition = bandWidth < filt
+
+// Definir Órdenes de Entrada y Salida
+if (longCondition)
+    strategy.entry("Buy", strategy.long)
+    
+if (shortCondition)
+    strategy.entry("Sell", strategy.short)
+    
+if (exitCondition)
+    strategy.close_all()
+
+// Configurar Opciones de Estrat
+commission = 0.05
+backtest_fill_limits_assumption = 1.0
+exit_on_session_close = true
+entry_size =  0.01
+
+// Configurar Alertas
+alertcondition(longCondition, title="Comprar", message="Comprar Bitcoin/Euro")
+alertcondition(shortCondition, title="Vender", message="Vender Bitcoin/Euro")
+alertcondition(exitCondition, title="Salir", message="Salir del Mercado")
+
+// Mostrar Información en Gráfico
+plot(upperBand, color=color.green, title="Banda Superior")
+plot(lowerBand, color=color.red, title="Banda Inferior")
+plot(ta.sma(src, length), color=color.yellow, title="Media Móvil")
+plot(rsiVal, color=color.purple, title="RSI")
